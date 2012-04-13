@@ -61,27 +61,6 @@ function hidden_nodes_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
 }
 
 /**
- * Returns true if the user has 'view hidden content' or if
- * they have the permission corresponding to the node's content type.
- */
-function _hidden_nodes_node_access($node, $old_access_callback, $old_access_arguments) {
-  // Only check permissions on nodes that are hidden.
-  if ($node->hidden == 1) {
-    $has_access = FALSE;
-    if (user_access('view hidden content')) {
-      $has_access = TRUE;
-    }
-    // if they don't have access based on evaluations above return
-    if (!$has_access) {
-      return FALSE;
-    }
-  }
-  // If none of the above conditions were satisfied, then use the original callback.
-  $old_access_arguments[1] = $node; // arg 1 is node object
-  return call_user_func_array($old_access_callback, $old_access_arguments);
-}
-
-/**
  * Implements hook_form_alter().
  */
 function hidden_nodes_form_alter(&$form, $form_state, $form_id) {
@@ -122,25 +101,6 @@ function hidden_nodes_node_grants($account, $op) {
 }
 
 /**
- * Implementation of hook_og_access_grants().
- */
-function hidden_nodes_og_access_grants_alter(&$grants, $node) {
-  // only perform this alter if the node passed has hidden TRUE
-  if ($node->hidden) {
-    // search for the core og grants of admin, subscriber and public
-    foreach ($grants as $key => $grant) {
-      if ($grant['realm'] == 'og_admin' || $grant['realm'] == 'og_public' || $grant['realm'] == 'og_subscriber') {
-        // remove og's ability to render node via default methods
-        // this essentially revokes og access control on nodes that are
-        // hidden so that the only valid way to view a hidden node
-        // is by having the hidden grant
-        $grants[$key]['grant_view'] = 0;
-      }
-    }
-  }
-}
-
-/**
  * Implementation of hook_node_access_records().
  */
 function hidden_nodes_node_access_records($node) {
@@ -153,7 +113,7 @@ function hidden_nodes_node_access_records($node) {
       'grant_view' => 1,
       'grant_update' => 0,
       'grant_delete' => 0,
-      'priority' => 0,
+      'priority' => 1000, // very high in hopes it is always first
     );
   }
   return $grants;
