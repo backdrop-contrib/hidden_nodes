@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Implementation of hook_install().
@@ -7,7 +6,7 @@
 function hidden_nodes_install() {
   // Make sure that the hidden_nodes module runs after other access modules.
   db_query("UPDATE {system} SET weight = 1 WHERE name = 'hidden_nodes' AND type = 'module' AND weight = 0");
-	drupal_install_schema('hidden_nodes');
+  drupal_install_schema('hidden_nodes');
 }
 
 /**
@@ -16,7 +15,7 @@ function hidden_nodes_install() {
 function hidden_nodes_uninstall() {
   // Remove tables.
   drupal_uninstall_schema('hidden_nodes');
-	variable_del('hidden_nodes_types');
+  variable_del('hidden_nodes_types');
 }
 
 /**
