@@ -20,10 +20,11 @@ to make them more flexible in the menu system while still providing the same
 end result functionality.  It has to do this because of the core limitation
 provided by using unpublish status.
 
+This module also account for organic groups handling of the node access table. The whole point of this module is to effectively "undo" all of the node access records aside from the ability to view hidden material.  If you have questions about how this is accomplished (or would like to account for the overriding of other modules view grants) please post issues to the issue queue.
+
 Usage:
 ------
-hidden_nodes looks for the "view all hidden content" permission and
-then the "view hidden (node type) content" permission when a user tries to
+hidden_nodes looks for the "view all hidden content" permission when a user tries to
 view a node that is marked hidden.
 
 After installing the module, navigate to your user access page and assign the
