@@ -16,6 +16,7 @@ function hidden_nodes_install() {
 function hidden_nodes_uninstall() {
   // Remove tables.
   drupal_uninstall_schema('hidden_nodes');
+	variable_del('hidden_nodes_types');
 }
 
 /**
