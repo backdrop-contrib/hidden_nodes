@@ -61,7 +61,7 @@ function hidden_nodes_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
     break;
     case 'load':
       // set hidden value
-			$node->hidden = db_result(db_query('SELECT hidden FROM {hidden_nodes} WHERE nid = %d', $node->nid));
+      $node->hidden = db_result(db_query('SELECT hidden FROM {hidden_nodes} WHERE nid = %d', $node->nid));
       if (empty($node->hidden)) {
         $node->hidden = 0;
       }
@@ -129,9 +129,9 @@ function hidden_nodes_form_alter(&$form, $form_state, $form_id) {
  */
 function hidden_nodes_node_grants($account, $op) {
   $grants = array();
-	if ($op == 'view' && user_access('view hidden content', $account)) {
-		$grants['hidden_nodes'] = array(1);
-	}
+  if ($op == 'view' && user_access('view hidden content', $account)) {
+    $grants['hidden_nodes'] = array(1);
+  }
   return $grants;
 }
 
