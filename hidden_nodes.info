@@ -1,4 +1,4 @@
 name = "Hidden Nodes"
-description = "Select which roles should be able to see hidden nodes by content type, or all hidden nodes."
+description = "Create the ability to hide nodes from users based on a checkbox setting without having to unpublish them."
 package = "Permissions"
 core = "6.x"
