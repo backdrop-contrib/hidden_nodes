@@ -2,24 +2,17 @@
 
 /**
  * @file
- * Allow users to view all hidden nodes, or hidden nodes
- * of a specific type.
+ * Allow users to hide nodes based on permissions.
  */
 
 /**
  * Implementation of hook_perm().
  *
- * Adds a global 'view all hidden content' permission and also
+ * Adds a global 'view hidden content' permission and also
  * a new permission for each content type.
  */
 function hidden_nodes_perm() {
-  $perms = array('view all hidden content');
-
-  foreach (node_get_types() as $type => $name) {
-    $perms[] = 'view hidden ' . $type . ' content';
-  }
-
-  return $perms;
+  return array('view hidden content');
 }
 
 /**
@@ -67,14 +60,9 @@ function hidden_nodes_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
       }
     break;
     case 'load':
-      // attempt to set hidden value
-      $result = db_query("SELECT hidden FROM {hidden_nodes} WHERE nid=%d", $node->nid);
-      $val = db_fetch_array($result);
-      // if this module was turned on after the fact, nodes won't have a value
-      if (isset($val['hidden'])) {
-        $node->hidden = $val['hidden'];
-      }
-      else {
+      // set hidden value
+			$node->hidden = db_result(db_query('SELECT hidden FROM {hidden_nodes} WHERE nid = %d', $node->nid));
+      if (empty($node->hidden)) {
         $node->hidden = 0;
       }
     break;
@@ -86,17 +74,14 @@ function hidden_nodes_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
 }
 
 /**
- * Returns true if the user has 'view all hidden content' or if
+ * Returns true if the user has 'view hidden content' or if
  * they have the permission corresponding to the node's content type.
  */
 function _hidden_nodes_node_access($node, $old_access_callback, $old_access_arguments) {
   // Only check permissions on nodes that are hidden.
   if ($node->hidden == 1) {
     $has_access = FALSE;
-    if (user_access('view all hidden content')) {
-      $has_access = TRUE;
-    }
-    if (user_access('view hidden ' . $node->type . ' content')) {
+    if (user_access('view hidden content')) {
       $has_access = TRUE;
     }
     // if they don't have access based on evaluations above return
@@ -125,73 +110,55 @@ function hidden_nodes_form_alter(&$form, $form_state, $form_id) {
         '#description' => t('Hide this content from displaying for users without the ability to see it. By having access to this option you will still be able to see the content after submission.'),
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
-        '#access' => user_access('view all hidden content') || user_access('view hidden ' . $node->type . ' content'),
+        '#access' => user_access('view hidden content'),
       );
       $form['hidden_nodes']['hidden'] = array(
         '#type' => 'checkbox',
         '#title' => t('Hide this content'),
         '#default_value' => $node->hidden,
-        '#access' => user_access('view all hidden content') || user_access('view hidden ' . $node->type . ' content'),
+        '#access' => user_access('view hidden content'),
       );
-      $form['#submit'][] = '_hidden_nodes_submit_handler';
     }
   }
 }
 
-/**
- * Submit handler for processing the hidden node checkbox.
- */
-function _hidden_nodes_submit_handler($form, &$form_state) {
-  if (isset($form_state['values']['hidden_node'])) {
-    //dpm($form_state);
-    $form['#node']->hidden = check_plain($form_state['values']['hidden_node']);
-  }
-}
+
 
 /**
  * Implementation of hook_node_grants().
- *//*
+ */
 function hidden_nodes_node_grants($account, $op) {
   $grants = array();
-	$node = menu_get_object();
-	if (isset($node->type)) {
-		if (user_access('view all hidden content', $account) || user_access('view hidden ' . $node->type . ' content', $account)) {
-      $grants['hidden_nodes'] = array(1);
-    }
+	if ($op == 'view' && user_access('view hidden content', $account)) {
+		$grants['hidden_nodes'] = array(1);
 	}
-	else {
-		if (user_access('view all hidden content', $account)) {
-      $grants['hidden_nodes'] = array(1);
-    }
-	}
-  
   return $grants;
-}*/
+}
 
 /**
  * Implementation of hook_node_access_records.
  */
-/*function hidden_nodes_node_access_records($node) {
+function hidden_nodes_node_access_records($node) {
   $grants = array();
   // only return grants if hidden is true
   if ($node->hidden) {
     $grants[] = array (
       'realm' => 'hidden_nodes',
       'gid' => 1,
-      'grant_view' => 1,
-      'grant_update' => 0,
-      'grant_delete' => 0,
+      'grant_view' => TRUE,
+      'grant_update' => FALSE,
+      'grant_delete' => FALSE,
       'priority' => 0,
     );
   }
   return $grants;
-}*/
+}
 
 /**
  * Implementation of hook_node_access_explain.
- *//*
+ */
 function hidden_nodes_node_access_explain($row) {
   if ($row->realm == 'hidden_nodes') {
     return t('Users with permission to see hidden nodes will.');
   }
-}*/
+}
