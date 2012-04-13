@@ -1,9 +1,10 @@
 Description:
 ------------
-This module adds a system similar to publish / unpublished status of nodes.
-The reason that this is needed is so that you can tell certain roles they can't 
-view nodes while others can. The issue with publishing status is that there is 
-no grey.  Menu systems automatically hide unpublished nodes while also 
+This module adds a system similar to publish / unpublished 
+status of nodes. The reason that this is needed is so that 
+you can tell certain roles they can't view nodes while others 
+can. The issue with publishing status is that there is no grey.
+Menu systems automatically hide unpublished nodes while also 
 checking for the node_access.
 
 This blocks situations where admins and sub-admins need to work on content 
@@ -20,7 +21,11 @@ to make them more flexible in the menu system while still providing the same
 end result functionality.  It has to do this because of the core limitation
 provided by using unpublish status.
 
-This module also account for organic groups handling of the node access table. The whole point of this module is to effectively "undo" all of the node access records aside from the ability to view hidden material.  If you have questions about how this is accomplished (or would like to account for the overriding of other modules view grants) please post issues to the issue queue.
+The access grants of this module are very high and as a result this 
+SHOULD work with other access control methods.  Note that "work with" 
+means that hidden nodes always takes priority because of the 
+implication of the project.  It is trying to effectively unpublish 
+the node without the weight of unpublish (have I said this enough).
 
 Usage:
 ------
