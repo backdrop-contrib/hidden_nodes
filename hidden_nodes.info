@@ -1,0 +1,4 @@
+name = "Hidden Nodes"
+description = "Select which roles should be able to see hidden nodes by content type, or all hidden nodes."
+package = "Permissions"
+core = "6.x"

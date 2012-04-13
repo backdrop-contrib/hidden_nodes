@@ -1,0 +1,91 @@
+<?php
+
+/**
+ * @file
+ * Allow users to view all hidden nodes, or hidden nodes
+ * of a specific type.
+ */
+
+/**
+ * Implementation of hook_perm().
+ *
+ * Adds a global 'view all hidden content' permission and also
+ * a new permission for each content type.
+ */
+function hidden_nodes_perm() {
+  $perms = array('view all hidden content');
+
+  foreach (node_get_types() as $type => $name) {
+    $perms[] = 'view hidden ' . $type . ' content';
+  }
+
+  return $perms;
+}
+
+/**
+ * Implementation of hook_menu_alter().
+ *
+ * Modifies the path node/nid to use our access callback.
+ */
+function hidden_nodes_menu_alter(&$items) {
+  $old_access_callback = $items['node/%node']['access callback'];
+  $old_access_arguments = $items['node/%node']['access arguments'];
+  $items['node/%node']['access callback'] = '_hidden_nodes_node_access';
+  $items['node/%node']['access arguments'] = array(1, $old_access_callback, $old_access_arguments);
+}
+
+/**
+ * Returns true if the user has 'view all hidden content' or if
+ * they have the permission corresponding to the node's content type.
+ */
+function _hidden_nodes_node_access($node, $old_access_callback, $old_access_arguments) {
+  // Only check permissions on nodes that are hidden.
+  if ($node->hidden == 0) {
+    if (user_access('view all hidden content')) {
+      return TRUE;
+    }
+
+    if (user_access('view hidden ' . $node->type . ' content')) {
+      return TRUE;
+    }
+  }
+  // If none of the above conditions were satisfied, then use the original callback.
+  $old_access_arguments[1] = $node; // arg 1 is node object
+  return call_user_func_array($old_access_callback, $old_access_arguments);
+}
+
+/**
+ * Implementation of hook_views_data_alter()
+ */
+function hidden_nodes_views_data_alter(&$data) {
+  // published status + extra handler is taken over by our handler
+  $data['node']['status_extra']['filter']['handler'] = 'hidden_nodes_handler_filter_node_status';
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function hidden_nodes_form_alter(&$form, $form_state, $form_id) {
+	// inject new option to hide node onto all node forms
+  if (isset($form['type']['#value']) && $form['type']['#value'] . '_node_form' == $form_id) {
+	  // Get a copy of the current node object.
+    $node = $form['#node'];
+
+    // Core doesn't include the revision fieldset if the user does not have
+    // access to it unlike all the other fieldsets, so we have to re-create it.
+    // @see http://drupal.org/node/668806
+    $form['revision_information'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Revision information'),
+      '#collapsible' => TRUE,
+      '#collapsed' => !$node->revision,
+      '#weight' => 20,
+    );
+    $form['revision_information']['revision'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Create new revision'),
+      '#default_value' => $node->revision,
+      '#access' => user_access('administer nodes') || user_access('override ' . $node->type . ' revision option'),
+    );
+	}
+}
