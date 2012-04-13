@@ -103,7 +103,7 @@ function hidden_nodes_form_alter(&$form, $form_state, $form_id) {
     // Get a copy of the current node object.
     $node = $form['#node'];
     // add field to the form if the setting is there for it
-    if (variable_get('hidden_node_type_'. $node->type, 0)) {
+    if (in_array($node->type, variable_get('hidden_nodes_types', array()))) {
       $form['hidden_node'] = array(
         '#type' => 'checkbox',
         '#title' => t('Hide node'),
