@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Allow users to hide nodes based on permissions.
@@ -29,18 +28,6 @@ function hidden_nodes_menu() {
     'access arguments' => array('administer site configuration'),
   );
   return $items;
-}
-
-/**
- * Implementation of hook_menu_alter().
- *
- * Modifies the path node/nid to use our access callback.
- */
-function hidden_nodes_menu_alter(&$items) {
-  $old_access_callback = $items['node/%node']['access callback'];
-  $old_access_arguments = $items['node/%node']['access arguments'];
-  $items['node/%node']['access callback'] = '_hidden_nodes_node_access';
-  $items['node/%node']['access arguments'] = array(1, $old_access_callback, $old_access_arguments);
 }
 
 /**
@@ -122,13 +109,12 @@ function hidden_nodes_form_alter(&$form, $form_state, $form_id) {
   }
 }
 
-
-
 /**
  * Implementation of hook_node_grants().
  */
 function hidden_nodes_node_grants($account, $op) {
   $grants = array();
+  // if operation is to view and they have view hidden nodes perm
   if ($op == 'view' && user_access('view hidden content', $account)) {
     $grants['hidden_nodes'] = array(1);
   }
@@ -136,7 +122,26 @@ function hidden_nodes_node_grants($account, $op) {
 }
 
 /**
- * Implementation of hook_node_access_records.
+ * Implementation of hook_og_access_grants().
+ */
+function hidden_nodes_og_access_grants_alter(&$grants, $node) {
+  // only perform this alter if the node passed has hidden TRUE
+  if ($node->hidden) {
+    // search for the core og grants of admin, subscriber and public
+    foreach ($grants as $key => $grant) {
+      if ($grant['realm'] == 'og_admin' || $grant['realm'] == 'og_public' || $grant['realm'] == 'og_subscriber') {
+        // remove og's ability to render node via default methods
+        // this essentially revokes og access control on nodes that are
+        // hidden so that the only valid way to view a hidden node
+        // is by having the hidden grant
+        $grants[$key]['grant_view'] = 0;
+      }
+    }
+  }
+}
+
+/**
+ * Implementation of hook_node_access_records().
  */
 function hidden_nodes_node_access_records($node) {
   $grants = array();
@@ -145,9 +150,9 @@ function hidden_nodes_node_access_records($node) {
     $grants[] = array (
       'realm' => 'hidden_nodes',
       'gid' => 1,
-      'grant_view' => TRUE,
-      'grant_update' => FALSE,
-      'grant_delete' => FALSE,
+      'grant_view' => 1,
+      'grant_update' => 0,
+      'grant_delete' => 0,
       'priority' => 0,
     );
   }
