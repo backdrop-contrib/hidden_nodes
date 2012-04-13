@@ -35,7 +35,7 @@ function hidden_nodes_menu() {
     'file' => 'hidden_nodes.admin.inc',
     'access arguments' => array('administer site configuration'),
   );
-	return $items;
+  return $items;
 }
 
 /**
@@ -55,11 +55,22 @@ function hidden_nodes_menu_alter(&$items) {
  */
 function hidden_nodes_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
   switch ($op) {
+    case 'insert':
+    case 'update':
+      // if node's ability to be hidden is valid, save it
+      if (isset($node->hidden)) {
+        db_query("UPDATE {hidden_nodes} SET hidden=%d WHERE nid=%d", $node->hidden, $node->nid);
+        // if there was no update then insert new
+        if (!db_affected_rows()) {
+          @db_query("INSERT INTO {hidden_nodes} (nid, hidden) VALUES(%d, %d)", $node->nid, $node->hidden);
+        }
+      }
+    break;
     case 'load':
       // attempt to set hidden value
       $result = db_query("SELECT hidden FROM {hidden_nodes} WHERE nid=%d", $node->nid);
       $val = db_fetch_array($result);
-			// if this module was turned on after the fact, nodes won't have a value
+      // if this module was turned on after the fact, nodes won't have a value
       if (isset($val['hidden'])) {
         $node->hidden = $val['hidden'];
       }
@@ -67,10 +78,10 @@ function hidden_nodes_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
         $node->hidden = 0;
       }
     break;
-		case 'delete':
-		  // clean up on node delete
-		  db_query("DELETE FROM {hidden_nodes} WHERE nid=%d", $node->nid);
-		break;
+    case 'delete':
+      // clean up on node delete
+      db_query("DELETE FROM {hidden_nodes} WHERE nid=%d", $node->nid);
+    break;
   }
 }
 
@@ -80,13 +91,17 @@ function hidden_nodes_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
  */
 function _hidden_nodes_node_access($node, $old_access_callback, $old_access_arguments) {
   // Only check permissions on nodes that are hidden.
-  if ($node->hidden == 0) {
+  if ($node->hidden == 1) {
+    $has_access = FALSE;
     if (user_access('view all hidden content')) {
-      return TRUE;
+      $has_access = TRUE;
     }
-
     if (user_access('view hidden ' . $node->type . ' content')) {
-      return TRUE;
+      $has_access = TRUE;
+    }
+    // if they don't have access based on evaluations above return
+    if (!$has_access) {
+      return FALSE;
     }
   }
   // If none of the above conditions were satisfied, then use the original callback.
@@ -104,14 +119,21 @@ function hidden_nodes_form_alter(&$form, $form_state, $form_id) {
     $node = $form['#node'];
     // add field to the form if the setting is there for it
     if (in_array($node->type, variable_get('hidden_nodes_types', array()))) {
-      $form['hidden_node'] = array(
-        '#type' => 'checkbox',
-        '#title' => t('Hide node'),
-        '#default_value' => $node->hidden,
-        '#description' => t('Hide this node from those without the permission to view hidden nodes.'),
-        '#access' => user_access('administer nodes') || user_access('view all hidden content') || user_access('view hidden ' . $node->type . ' content'),
+      $form['hidden_nodes'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Hide content'),
+        '#description' => t('Hide this content from displaying for users without the ability to see it. By having access to this option you will still be able to see the content after submission.'),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+        '#access' => user_access('view all hidden content') || user_access('view hidden ' . $node->type . ' content'),
       );
-			$form['#submit'][] = '_hidden_nodes_submit_handler';
+      $form['hidden_nodes']['hidden'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Hide this content'),
+        '#default_value' => $node->hidden,
+        '#access' => user_access('view all hidden content') || user_access('view hidden ' . $node->type . ' content'),
+      );
+      $form['#submit'][] = '_hidden_nodes_submit_handler';
     }
   }
 }
@@ -121,10 +143,55 @@ function hidden_nodes_form_alter(&$form, $form_state, $form_id) {
  */
 function _hidden_nodes_submit_handler($form, &$form_state) {
   if (isset($form_state['values']['hidden_node'])) {
-		$form['#node']->hidden = check_plain($form_state['values']['hidden_node']);
-	}
+    //dpm($form_state);
+    $form['#node']->hidden = check_plain($form_state['values']['hidden_node']);
+  }
 }
-// @todo: add submit handler for the checkbox value above
-// also add the checkbox into a fieldset just to make things cleaner
-// use elms packaging funness to bundle default settings
-// override language to be content centric
+
+/**
+ * Implementation of hook_node_grants().
+ *//*
+function hidden_nodes_node_grants($account, $op) {
+  $grants = array();
+	$node = menu_get_object();
+	if (isset($node->type)) {
+		if (user_access('view all hidden content', $account) || user_access('view hidden ' . $node->type . ' content', $account)) {
+      $grants['hidden_nodes'] = array(1);
+    }
+	}
+	else {
+		if (user_access('view all hidden content', $account)) {
+      $grants['hidden_nodes'] = array(1);
+    }
+	}
+  
+  return $grants;
+}*/
+
+/**
+ * Implementation of hook_node_access_records.
+ */
+/*function hidden_nodes_node_access_records($node) {
+  $grants = array();
+  // only return grants if hidden is true
+  if ($node->hidden) {
+    $grants[] = array (
+      'realm' => 'hidden_nodes',
+      'gid' => 1,
+      'grant_view' => 1,
+      'grant_update' => 0,
+      'grant_delete' => 0,
+      'priority' => 0,
+    );
+  }
+  return $grants;
+}*/
+
+/**
+ * Implementation of hook_node_access_explain.
+ *//*
+function hidden_nodes_node_access_explain($row) {
+  if ($row->realm == 'hidden_nodes') {
+    return t('Users with permission to see hidden nodes will.');
+  }
+}*/
