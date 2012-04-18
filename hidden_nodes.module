@@ -218,20 +218,28 @@ function _hidden_nodes_get_status($nid) {
 /**
  * Implementation of hook_outline_designer_operations().
  */
-function hidden_nodes_outline_designer_operations() {
-  return array(
-    'hidden_nodes' => array(
-      'title' => t('Hide node'),
-      'icon' => drupal_get_path('module', 'hidden_nodes') .'/images/hidden_node.png',
-      'callback' => 'hidden_nodes_outline_designer_hide_node',
-      ),
-  );
+function hidden_nodes_outline_designer_operations($type) {
+  switch ($type) {
+    case 'book':
+      $ops = array(
+        'hidden_nodes' => array(
+          'title' => t('Hide node'),
+          'icon' => drupal_get_path('module', 'hidden_nodes') .'/images/hidden_node.png',
+          'callback' => 'hidden_nodes_outline_designer_hide_node',
+        ),
+      );
+    break;
+    default:
+      $ops = array();
+    break;
+  }
+  return $ops;
 }
 
 /**
  * Implementation of hook_outline_designer_ops_js().
  */
-function hidden_nodes_outline_designer_ops_js() {
+function hidden_nodes_outline_designer_ops_js($ajax_path) {
   drupal_add_js(drupal_get_path('module', 'hidden_nodes') .'/js/hidden_nodes_ops.js', 'footer');
   return 1;
 }
