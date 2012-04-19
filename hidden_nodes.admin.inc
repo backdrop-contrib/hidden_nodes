@@ -7,9 +7,9 @@
 /**
  * Implementation of page callback for settings.
  */
-function hidden_nodes_setting_page() {
+function hidden_nodes_setting_page($form, &$form_state) {
   $form = array();
-  foreach (node_get_types() as $type_data) {
+  foreach (node_type_get_types() as $type_data) {
     $types[$type_data->type] = $type_data->name;
   }
   $form['hidden_nodes_types'] = array(
