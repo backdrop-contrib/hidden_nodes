@@ -9,8 +9,6 @@
  */
 function hidden_nodes_install() {
   // Make sure that the hidden_nodes module runs before menu alter system
-  // TODO Please review the conversion of this statement to the D7 database API syntax.
-  /* db_query("UPDATE {system} SET weight = -1 WHERE name = 'hidden_nodes' AND type = 'module'") */
   db_update('system')
   ->fields(array(
     'weight' => -1,
@@ -18,8 +16,6 @@ function hidden_nodes_install() {
   ->condition('name', 'hidden_nodes')
   ->condition('type', 'module')
   ->execute();
-  // TODO The drupal_(un)install_schema functions are called automatically in D7.
-  // drupal_install_schema('hidden_nodes')
 }
 
 /**
@@ -27,8 +23,6 @@ function hidden_nodes_install() {
  */
 function hidden_nodes_uninstall() {
   // Remove tables.
-  // TODO The drupal_(un)install_schema functions are called automatically in D7.
-  // drupal_uninstall_schema('hidden_nodes')
   variable_del('hidden_nodes_types');
 }
 
@@ -57,17 +51,4 @@ function hidden_nodes_schema() {
     'primary key' => array('nid'),
   );
   return $schema;
-}
-
-/**
- * Implements hook_update_N().
- */
-function hidden_nodes_update_6100() {
-  // Make sure that the hidden_nodes module runs before menu system
-  // TODO update_sql has been removed. Use the database API for any schema or data changes.
-  array() /* update_sql("UPDATE {system} SET weight = -1 WHERE name = 'hidden_nodes' AND type = 'module'") */;
-  // hook_update_N() no longer returns a $ret array. Instead, return
-  // nothing or a translated string indicating the update ran successfully.
-  // See http://drupal.org/node/224333#update_sql.
-  return t('TODO Add a descriptive string here to show in the UI.') /* array() */;
 }
