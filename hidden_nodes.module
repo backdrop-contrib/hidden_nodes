@@ -32,7 +32,7 @@ function hidden_nodes_permission() {
  */
 function hidden_nodes_menu() {
   $items = array();
-  $items['admin/config/hidden_nodes'] = array(
+  $items['admin/config/content/hidden_nodes'] = array(
     'title' => 'Hidden nodes',
     'description' => 'Settings for Hidden nodes module',
     'page callback' => 'drupal_get_form',
@@ -49,16 +49,12 @@ function hidden_nodes_menu() {
 function hidden_nodes_node_insert($node) {
   // if node's ability to be hidden is valid, save it
   if (isset($node->hidden)) {
-    db_update('hidden_nodes')
-  ->fields(array(
-      'hidden' => $node->hidden,
-    ))
-  ->condition('nid', $node->nid)
-  ->execute();
-    // if there was no update then insert new
-    if (!db_affected_rows()) {
-      @db_query("INSERT INTO {hidden_nodes} (nid, hidden) VALUES(%d, %d)", $node->nid, $node->hidden);
-    }
+    db_insert('hidden_nodes')
+      ->fields(array(
+        'nid' => $node->nid,
+        'hidden' => $node->hidden,
+      ))
+      ->execute();
   }
 }
 
@@ -68,16 +64,28 @@ function hidden_nodes_node_insert($node) {
 function hidden_nodes_node_update($node) {
   // if node's ability to be hidden is valid, save it
   if (isset($node->hidden)) {
-    db_update('hidden_nodes')
-  ->fields(array(
-      'hidden' => $node->hidden,
-    ))
-  ->condition('nid', $node->nid)
-  ->execute();
-    // if there was no update then insert new
-    if (!db_affected_rows()) {
-      @db_query("INSERT INTO {hidden_nodes} (nid, hidden) VALUES(%d, %d)", $node->nid, $node->hidden);
-    }
+    // see if it has a record at all
+    $result1 = db_select('hidden_nodes', 'hn')
+    ->fields('hn')
+    ->condition('nid', $node->nid)
+    ->execute()
+    ->rowCount();
+    // see if the update was successful
+    $result2 = db_update('hidden_nodes')
+      ->fields(array(
+          'hidden' => $node->hidden,
+        ))
+      ->condition('nid', $node->nid)
+      ->execute();
+    // only perform insert if it didn't exist and didn't update
+    if (!$result2 && !$result1) {
+        db_insert('hidden_nodes')
+      ->fields(array(
+        'nid' => $node->nid,
+        'hidden' => $node->hidden,
+      ))
+      ->execute();
+      }
   }
 }
 
@@ -86,14 +94,14 @@ function hidden_nodes_node_update($node) {
  */
 function hidden_nodes_node_load($nodes, $types) {
   // set hidden value if this is a valid type
-	foreach ($nodes as $node) {
-		if (in_array($node->type, variable_get('hidden_nodes_types', array()))) {
-			$node->hidden = _hidden_nodes_get_status($node->nid);
-			if (empty($node->hidden)) {
-				$node->hidden = 0;
-			}
-		}
-	}
+  foreach ($nodes as $node) {
+    if (in_array($node->type, variable_get('hidden_nodes_types', array()))) {
+      $node->hidden = _hidden_nodes_get_status($node->nid);
+      if (empty($node->hidden)) {
+        $node->hidden = 0;
+      }
+    }
+  }
 }
 
 /**
@@ -118,14 +126,13 @@ function hidden_nodes_node_view($node, $view_mode = 'full') {
       }
       // if there are parents, perform the join otherwise we are done
       if (count($parents) > 0) {
+        $result = db_query('SELECT hn.hidden FROM {hidden_nodes} hn JOIN {book} b ON b.nid=hn.nid WHERE b.mlid IN (:parents) AND hn.hidden =1', array(':parents' => $parents));
+        $count = 0;
+        foreach ($result as $record) {
+          $count++;
+        }
         // if we count parents that are hidden, report that fact
-				$result = db_select('hidden_nodes', 'hn')
-  ->fields('hn', array('count'))
-  ->join('book', 'b', 'hn.nid = b.nid')
-  ->condition('mlid', $parents, 'in')
-  ->condition('hidden', 1)
-  ->execute();
-        if ($result > 0) {
+        if ($count > 0) {
           drupal_set_message(t('This content is not hidden, but it has some parent content that is and will not display in most menus as a result.'), 'warning', FALSE);
         }
       }
@@ -144,11 +151,6 @@ function hidden_nodes_node_delete($node) {
 }
 
 /**
- * Implements hook_nodeapi().
- */
-function hidden_nodes_nodeapi_OLD(&$node, $op, $a3 = NULL, $a4 = NULL) { }
-
-/**
  * Implements hook_form_alter().
  */
 function hidden_nodes_form_alter(&$form, $form_state, $form_id) {
@@ -156,6 +158,10 @@ function hidden_nodes_form_alter(&$form, $form_state, $form_id) {
   if (isset($form['type']['#value']) && $form['type']['#value'] . '_node_form' == $form_id) {
     // Get a copy of the current node object.
     $node = $form['#node'];
+    // set a default value for hidden to account for new node form
+    if (!isset($node->hidden)) {
+      $node->hidden = 0;
+    }
     // add field to the form if the setting is there for it
     if (in_array($node->type, variable_get('hidden_nodes_types', array()))) {
       $form['hidden_nodes'] = array(
@@ -185,14 +191,14 @@ function hidden_nodes_form_alter(&$form, $form_state, $form_id) {
         if (isset($row['#item']['options']['attributes'])) {
           // if class is found, apply styling
           if (strpos($row['#item']['options']['attributes']['class'], 'node_is_hidden') !== FALSE) {
-            $form['table'][$key]['#attributes'] = array('class' => 'node_is_hidden');
+            $form['table'][$key]['#attributes']['class'][] = 'node_is_hidden';
             // list this as a hidden parent if node_is_hidden is found
             $hidden_parents[$key] = $row['mlid']['#default_value'];
           }
         }
         // if we find something that has a parent that is hidden, propagate class
         if (in_array($row['plid']['#default_value'], $hidden_parents)) {
-          $form['table'][$key]['#attributes'] = array('class' => 'node_is_hidden');
+          $form['table'][$key]['#attributes']['class'][] = 'node_is_hidden';
           // add this to the hidden list so it can propagate further
           $hidden_parents[$key] = $row['mlid']['#default_value'];
         }
@@ -250,11 +256,18 @@ function hidden_nodes_menu_link_alter(&$item) {
     // need to directly access database as static cache of object is invalid
     // this happens because page save would change the value of hidden
     if (_hidden_nodes_get_status($item['nid'])) {
-      $item['options']['attributes']['class'] = ' node_is_hidden';
+      if (!isset($item['options']['attributes'])) {
+        $item['options']['attributes'] = array('class' => ' node_is_hidden');
+      }
+      else {
+        $item['options']['attributes']['class'] = ' node_is_hidden';
+      }
     }
     else {
       // we do this to avoid potential conflicts with menu attributes modules
-      $item['options']['attributes']['class'] = str_replace(' node_is_hidden', '', $item['options']['attributes']['class']);
+      if (isset($item['options']['attributes'])) {
+        $item['options']['attributes']['class'] = str_replace(' node_is_hidden', '', $item['options']['attributes']['class']);
+      }
     }
   }
 }
@@ -291,8 +304,7 @@ function hidden_nodes_outline_designer_operations($type) {
  * Implements hook_outline_designer_ops_js().
  */
 function hidden_nodes_outline_designer_ops_js($ajax_path) {
-  drupal_add_js(drupal_get_path('module', 'hidden_nodes') . '/js/hidden_nodes_ops.js', array('type' => 'footer', 'scope' => JS_DEFAULT));
-  return 1;
+  drupal_add_js(drupal_get_path('module', 'hidden_nodes') . '/js/hidden_nodes_ops.js', array('scope' => 'footer'));
 }
 
 /**
@@ -337,13 +349,28 @@ function hidden_nodes_outline_designer_hide_node($nid, $multiple, $status) {
       $mlid = $node->book['mlid'];
       // ensure this is a real value
       if ($mlid != 0 && $mlid != '') {
-        $result = db_query("
-        SELECT link_path
-        FROM {menu_links}
-        WHERE p2=%d OR p3=%d OR p4=%d OR p5=%d OR p6=%d OR p7=%d OR p8=%d OR p9=%d
-        ORDER BY depth ASC", $mlid, $mlid, $mlid, $mlid, $mlid, $mlid, $mlid, $mlid);
-        while ($value = db_fetch_array($result)) {
-          $current_node = node_load(str_replace('node/', '', $value['link_path']));
+        $result = db_select('menu_links', 'ml')
+          ->fields('ml', array('link_path'))
+          ->condition(db_or()
+            ->condition('p2', $mlid)
+            ->condition('p3', $mlid)
+          ->condition(db_or()
+            ->condition('p4', $mlid)
+            ->condition('p5', $mlid)
+          ->condition(db_or()
+            ->condition('p6', $mlid)
+            ->condition('p7', $mlid)
+          ->condition(db_or()
+            ->condition('p8', $mlid)
+            ->condition('p9', $mlid)
+          )
+          )
+          )
+          )
+          ->orderBy('depth', 'asc')
+          ->execute();
+        foreach ($result as $value) {
+          $current_node = node_load(str_replace('node/', '', $value->link_path));
           if (isset($current_node->nid) && in_array($current_node->type, variable_get('hidden_nodes_types', array())) && node_access('update', $current_node) && $status != $current_node->hidden) {
             $current_node->hidden = $status;
             node_save($current_node);
