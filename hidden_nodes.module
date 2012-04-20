@@ -171,6 +171,11 @@ function hidden_nodes_form_alter(&$form, $form_state, $form_id) {
         '#collapsible' => TRUE,
         '#collapsed' => !($node->hidden),
         '#access' => user_access('view hidden content'),
+        '#group' => 'additional_settings',
+        '#weight' => 95,  // the same as "Publishing options" tab
+        '#attached' => array(
+          'js' => array(drupal_get_path('module', 'hidden_nodes') . '/js/hidden_nodes.js'),
+        ),
       );
       $form['hidden_nodes']['hidden'] = array(
         '#type' => 'checkbox',
