@@ -278,6 +278,16 @@ function hidden_nodes_menu_link_alter(&$item) {
 }
 
 /**
+* Implements hook_views_api().
+*/
+function hidden_nodes_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'hidden_nodes'),
+  );
+}
+
+/**
  * Helper function to return hidden status based on nid.
  */
 function _hidden_nodes_get_status($nid) {
