@@ -5,7 +5,7 @@
  */
 
 /**
- * Implementation of hook_views_data().
+ * Implements hook_views_data().
  *
  * Provides the Hidden Node status as a Views field for Views 2+.
  */

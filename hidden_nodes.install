@@ -8,7 +8,7 @@
  * Implements hook_install().
  */
 function hidden_nodes_install() {
-  // Make sure that the hidden_nodes module runs before menu alter system
+  // Make sure that the hidden_nodes module runs before menu alter system.
   db_update('system')
   ->fields(array(
     'weight' => -1,

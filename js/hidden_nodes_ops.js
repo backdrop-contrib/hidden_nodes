@@ -4,10 +4,10 @@
     $(".od_submit_button").val('Submit');
     // set default state based on whats loaded
     if ($("#node-" + Drupal.settings.outline_designer.activeNid +"-icon").parent().parent().hasClass('node_is_hidden')) {
-      $('#od_hidden_nodes_status').attr('checked','checked')
+      $('#od_hidden_nodes_status').attr('checked','checked');
     }
     else {
-      $('#od_hidden_nodes_status').removeAttr('checked')
+      $('#od_hidden_nodes_status').removeAttr('checked');
     }
     // function call
     Drupal.outline_designer.render_popup(true);
