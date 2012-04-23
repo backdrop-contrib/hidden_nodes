@@ -262,11 +262,25 @@ function hidden_nodes_node_access_explain($row) {
  * Implements hook_menu_link_alter().
  */
 function hidden_nodes_menu_link_alter(&$item) {
-  // If we have a node based menu object.
+  $nid = FALSE;
+  // try and pull from book based menu item, the easiest to account for
   if (isset($item['nid'])) {
+    $nid = $item['nid'];
+  }
+  elseif (isset($item['link_path'])) {
+    // convert link path into args
+    $tmp = explode('/', $item['link_path']);
+    // if the first part is node and second is numeric, assume nid
+    if (count($tmp) > 1 && $tmp[0] == 'node' && is_numeric($tmp[1])) {
+      // set nid = second arg
+      $nid = $tmp[1];
+    }
+  }
+  // only process this if we actually found a node to act on
+  if ($nid) {
     // Need to directly access database as static cache of object is invalid.
     // This happens because page save would change the value of hidden.
-    if (_hidden_nodes_get_status($item['nid'])) {
+    if (_hidden_nodes_get_status($nid)) {
       if (!isset($item['options']['attributes'])) {
         $item['options']['attributes'] = array('class' => ' node_is_hidden');
       }
@@ -276,7 +290,7 @@ function hidden_nodes_menu_link_alter(&$item) {
     }
     else {
       // Avoid potential conflicts with menu attributes modules.
-      if (isset($item['options']['attributes'])) {
+      if (isset($item['options']['attributes']['class'])) {
         $item['options']['attributes']['class'] = str_replace(' node_is_hidden', '', $item['options']['attributes']['class']);
       }
     }
