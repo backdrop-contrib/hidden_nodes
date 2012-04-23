@@ -22,8 +22,9 @@ function hidden_nodes_install() {
  * Implements hook_uninstall().
  */
 function hidden_nodes_uninstall() {
-  // Remove tables.
+  // Remove variables.
   variable_del('hidden_nodes_types');
+  variable_del('hidden_nodes_show_message');
 }
 
 /**
