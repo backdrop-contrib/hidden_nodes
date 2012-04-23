@@ -110,10 +110,25 @@ function hidden_nodes_node_load($nodes, $types) {
 function hidden_nodes_node_view($node, $view_mode = 'full') {
   // If this is hidden and global message set.
   if (isset($node->hidden) && variable_get('hidden_nodes_show_message', 1)) {
-    // Display message if hidden is true.
+
+    // Display a message if hidden is true.
     if ($node->hidden) {
-      drupal_set_message(t('This content is currently hidden and not displayed to certain user roles.'), 'warning', FALSE);
+      // Determine proper message to show based on whether all page content is
+      // hidden, or whether only some content on the page is hidden (such as
+      // when full nodes are loaded into a view, promoted to front page, etc).
+      $obj = menu_get_object();
+      if ($obj) {
+        if ($obj->nid == $node->nid) {
+          // All page content is hidden.
+          drupal_set_message(t('This content is currently hidden and not displayed to certain user roles.'), 'warning', FALSE);
+        }
+      }
+      else {
+        // Page contains some hidden content.
+        drupal_set_message(t('This page contains some content that is currently hidden and not displayed to certain user roles.'), 'warning', FALSE);
+      }
     }
+
     // Book module integration, check parents for hidden status to report more
     // accurately.
     elseif (isset($node->book)) {
