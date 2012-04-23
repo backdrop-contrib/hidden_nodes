@@ -263,20 +263,20 @@ function hidden_nodes_node_access_explain($row) {
  */
 function hidden_nodes_menu_link_alter(&$item) {
   $nid = FALSE;
-  // try and pull from book based menu item, the easiest to account for
+  // Try and pull from book based menu item, the easiest to account for.
   if (isset($item['nid'])) {
     $nid = $item['nid'];
   }
   elseif (isset($item['link_path'])) {
-    // convert link path into args
+    // Convert link path into args.
     $tmp = explode('/', $item['link_path']);
-    // if the first part is node and second is numeric, assume nid
+    // If the first part is node and second is numeric, assume nid.
     if (count($tmp) > 1 && $tmp[0] == 'node' && is_numeric($tmp[1])) {
-      // set nid = second arg
+      // Set nid = second arg.
       $nid = $tmp[1];
     }
   }
-  // only process this if we actually found a node to act on
+  // Only process this if we actually found a node to act on.
   if ($nid) {
     // Need to directly access database as static cache of object is invalid.
     // This happens because page save would change the value of hidden.
