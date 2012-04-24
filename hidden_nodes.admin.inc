@@ -70,7 +70,7 @@ function hidden_nodes_setting_page($form, &$form_state) {
   $form['parent_content']['hidden_nodes_parent_message'] = array(
     '#type' => 'textfield',
     '#title' => t('Message'),
-    '#default_value' => check_plain(variable_get('hidden_nodes_parent_message', "This content is not hidden, but it has some parent content that is and will not display in most menus as a result.")),
+    '#default_value' => check_plain(variable_get('hidden_nodes_parent_message', "This content is not hidden, but it has some parent content that is and will not display in most book-based menus as a result.")),
     '#size' => 90,
     '#maxlength' => 128,
   );
