@@ -25,6 +25,8 @@ function hidden_nodes_uninstall() {
   // Remove variables.
   variable_del('hidden_nodes_types');
   variable_del('hidden_nodes_show_message');
+  variable_del('hidden_nodes_show_partial_message');
+  variable_del('hidden_nodes_show_parent_message');
 }
 
 /**

@@ -108,11 +108,12 @@ function hidden_nodes_node_load($nodes, $types) {
  * Implements hook_node_view().
  */
 function hidden_nodes_node_view($node, $view_mode = 'full') {
-  // If this is hidden and global message set.
-  if (isset($node->hidden) && variable_get('hidden_nodes_show_message', 1)) {
+  // If there is hidden content.
+  if (isset($node->hidden)) {
 
     // Display a message if hidden is true.
     if ($node->hidden) {
+
       // Determine proper message to show based on whether all page content is
       // hidden, or whether only some content on the page is hidden (such as
       // when full nodes are loaded into a view, promoted to front page, etc).
@@ -120,12 +121,16 @@ function hidden_nodes_node_view($node, $view_mode = 'full') {
       if ($obj) {
         if ($obj->nid == $node->nid) {
           // All page content is hidden.
-          drupal_set_message(t('This content is currently hidden and not displayed to certain user roles.'), 'warning', FALSE);
+          if (variable_get('hidden_nodes_show_message', 1)) {
+            drupal_set_message(t('This content is currently hidden and not displayed to certain user roles.'), 'warning', FALSE);
+          }
         }
       }
       else {
         // Page contains some hidden content.
-        drupal_set_message(t('This page contains some content that is currently hidden and not displayed to certain user roles.'), 'warning', FALSE);
+        if (variable_get('hidden_nodes_show_partial_message', 0)) {
+          drupal_set_message(t('This page contains some content that is currently hidden and not displayed to certain user roles.'), 'warning', FALSE);
+        }
       }
     }
 
@@ -151,7 +156,9 @@ function hidden_nodes_node_view($node, $view_mode = 'full') {
         }
         // If we count parents that are hidden, report that fact.
         if ($count > 0) {
-          drupal_set_message(t('This content is not hidden, but it has some parent content that is and will not display in most menus as a result.'), 'warning', FALSE);
+          if (variable_get('hidden_nodes_show_parent_message', 1)) {
+            drupal_set_message(t('This content is not hidden, but it has some parent content that is and will not display in most menus as a result.'), 'warning', FALSE);
+          }
         }
       }
     }
