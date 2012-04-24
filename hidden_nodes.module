@@ -122,14 +122,14 @@ function hidden_nodes_node_view($node, $view_mode = 'full') {
         if ($obj->nid == $node->nid) {
           // All page content is hidden.
           if (variable_get('hidden_nodes_show_message', 1)) {
-            drupal_set_message(t('This content is currently hidden and not displayed to certain user roles.'), 'warning', FALSE);
+            drupal_set_message(check_plain(variable_get('hidden_nodes_message', "This content is currently hidden and not displayed to certain user roles.")), 'warning', FALSE);
           }
         }
       }
       else {
         // Page contains some hidden content.
         if (variable_get('hidden_nodes_show_partial_message', 0)) {
-          drupal_set_message(t('This page contains some content that is currently hidden and not displayed to certain user roles.'), 'warning', FALSE);
+          drupal_set_message(check_plain(variable_get('hidden_nodes_partial_message', "This page contains some content that is currently hidden and not displayed to certain user roles.")), 'warning', FALSE);
         }
       }
     }
@@ -157,7 +157,7 @@ function hidden_nodes_node_view($node, $view_mode = 'full') {
         // If we count parents that are hidden, report that fact.
         if ($count > 0) {
           if (variable_get('hidden_nodes_show_parent_message', 1)) {
-            drupal_set_message(t('This content is not hidden, but it has some parent content that is and will not display in most menus as a result.'), 'warning', FALSE);
+            drupal_set_message(check_plain(variable_get('hidden_nodes_parent_message', "This content is not hidden, but it has some parent content that is and will not display in most menus as a result.")), 'warning', FALSE);
           }
         }
       }
