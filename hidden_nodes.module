@@ -10,7 +10,9 @@
  * Loads neccessary css onto the page to overlay hidden elements.
  */
 function hidden_nodes_init() {
-  drupal_add_css(drupal_get_path('module', 'hidden_nodes') . '/hidden_nodes.css');
+  if (variable_get('hidden_nodes_apply_styles', 1)) {
+    drupal_add_css(drupal_get_path('module', 'hidden_nodes') . '/hidden_nodes.css');
+  }
 }
 
 /**
@@ -34,7 +36,7 @@ function hidden_nodes_menu() {
   $items = array();
   $items['admin/config/content/hidden_nodes'] = array(
     'title' => 'Hidden nodes',
-    'description' => 'Settings for Hidden nodes module',
+    'description' => 'Settings for Hidden nodes module.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('hidden_nodes_setting_page'),
     'file' => 'hidden_nodes.admin.inc',

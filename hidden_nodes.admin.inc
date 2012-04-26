@@ -21,6 +21,13 @@ function hidden_nodes_setting_page($form, &$form_state) {
     '#multiple' => TRUE,
   );
 
+  $form['hidden_nodes_apply_styles'] = array(
+    '#type' => 'checkbox',
+    '#title' => t("Use this module's styles for hidden content and menu links to hidden content."),
+    '#description' => t("Apply the CSS rules supplied with this module.  Note: these rules may not affect display if overridden in theme."),
+    '#default_value' => variable_get('hidden_nodes_apply_styles', 1),
+  );
+
   $form['content'] = array(
     '#type' => 'fieldset',
     '#title' => t('Hidden full node message'),
