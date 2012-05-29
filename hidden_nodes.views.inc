@@ -41,10 +41,9 @@ function hidden_nodes_views_data() {
       'handler' => 'views_handler_sort',
     ),
     'filter' => array(
-      'handler' => 'views_handler_filter_string',
-    ),
-    'argument' => array(
-      'handler' => 'views_handler_argument_string',
+      'handler' => 'views_handler_filter_boolean_operator',
+      'label' => t('Hidden'),
+      'type' => 'yes-no',
     ),
   );
   return $data;
