@@ -73,6 +73,7 @@ function hidden_nodes_node_update($node) {
     ->execute()
     ->rowCount();
     // See if the update was successful.
+    dpm($result1);
     $result2 = db_update('hidden_nodes')
       ->fields(array(
           'hidden' => $node->hidden,
@@ -437,4 +438,42 @@ function hidden_nodes_outline_designer_hide_node($nid, $multiple, $status) {
     }
     return t('Content was marked hidden successfully');
   }
+}
+
+/**
+ * Implements hook_action_info().
+ */
+function hidden_nodes_action_info() {
+  return array(
+    'hidden_nodes_hide_action' => array(
+      'label' => t('Hide content'),
+      'type' => 'node',
+      'configurable' => FALSE,
+      'triggers' => array('any'),
+    ),
+    'hidden_nodes_unhide_action' => array(
+      'label' => t('Unhide content'),
+      'type' => 'node',
+      'configurable' => FALSE,
+      'triggers' => array('any'),
+    ),
+  );
+}
+
+/**
+ * Implements a Drupal action.
+ * Hides the current node.
+ */
+function hidden_nodes_hide_action(&$node, $context) {
+  $node->hidden = 1;
+  hidden_nodes_node_update($node);
+}
+
+/**
+ * Implements a Drupal action.
+ * Unhides the current node.
+ */
+function hidden_nodes_unhide_action(&$node, $context) {
+  $node->hidden = 0;
+  hidden_nodes_node_update($node);
 }
