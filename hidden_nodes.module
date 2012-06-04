@@ -73,7 +73,6 @@ function hidden_nodes_node_update($node) {
     ->execute()
     ->rowCount();
     // See if the update was successful.
-    dpm($result1);
     $result2 = db_update('hidden_nodes')
       ->fields(array(
           'hidden' => $node->hidden,
