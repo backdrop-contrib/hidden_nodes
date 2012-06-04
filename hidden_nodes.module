@@ -256,19 +256,22 @@ function hidden_nodes_node_grants($account, $op) {
  */
 function hidden_nodes_node_access_records($node) {
   $grants = array();
-  // Only return grants if hidden is true.
-  if ($node->hidden) {
-    $grants[] = array(
-      'realm' => 'hidden_nodes',
-      'gid' => 1,
-      'grant_view' => 1,
-      'grant_update' => 0,
-      'grant_delete' => 0,
-      // Set priority very high in hopes it is always first.
-      'priority' => 1000,
-    );
+  // Check if the node type is able to be hidden.
+  if (in_array($node->type, variable_get('hidden_nodes_types', array()))) {
+    // Only return grants if hidden is true.
+    if ($node->hidden) {
+      $grants[] = array(
+        'realm' => 'hidden_nodes',
+        'gid' => 1,
+        'grant_view' => 1,
+        'grant_update' => 0,
+        'grant_delete' => 0,
+        // Set priority very high in hopes it is always first.
+        'priority' => 1000,
+      );
+    }
+    return $grants;
   }
-  return $grants;
 }
 
 /**
