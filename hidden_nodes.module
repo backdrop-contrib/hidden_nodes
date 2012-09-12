@@ -111,7 +111,7 @@ function hidden_nodes_node_load($nodes, $types) {
  */
 function hidden_nodes_node_view($node, $view_mode = 'full') {
   // If there is hidden content.
-  if (isset($node->hidden)) {
+  if (isset($node->hidden) && user_access('view hidden content')) {
 
     // Display a message if hidden is true.
     if ($node->hidden) {
