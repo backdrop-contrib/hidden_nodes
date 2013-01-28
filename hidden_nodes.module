@@ -259,7 +259,7 @@ function hidden_nodes_node_access_records($node) {
   // Check if the node type is able to be hidden.
   if (in_array($node->type, variable_get('hidden_nodes_types', array()))) {
     // Only return grants if hidden is true.
-    if ($node->hidden) {
+    if (isset($node->hidden) && $node->hidden) {
       $grants[] = array(
         'realm' => 'hidden_nodes',
         'gid' => 1,
