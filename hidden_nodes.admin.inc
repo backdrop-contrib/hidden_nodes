@@ -7,7 +7,7 @@
 /**
  * Implementation of page callback for settings.
  */
-function hidden_nodes_setting_page($form, $form_state) {
+function hidden_nodes_setting_page($form, &$form_state) {
   $config = config('hidden_nodes.settings');
   $form = array();
   $form['#config'] = 'hidden_nodes.settings';
