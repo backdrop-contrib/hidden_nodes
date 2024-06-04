@@ -13,13 +13,15 @@ function hidden_nodes_views_data() {
   $data = array();
 
   // Define the hidden_nodes table.
+
   $data['hidden_nodes']['table'] = array(
     'group' => t('Content'),
     'title' => t('Hidden status'),
-    'help'  => t('Hidden/not hidden via the Hidden Nodes module'),
+    'help' => t('Hidden/not hidden via the Hidden Nodes module'),
   );
 
   // Join to the node table.
+
   $data['hidden_nodes']['table']['join'] = array(
     'node' => array(
       'left_field' => 'nid',
@@ -28,6 +30,7 @@ function hidden_nodes_views_data() {
   );
 
   // Define the field.
+
   $data['hidden_nodes']['hidden'] = array(
     'title' => t('Hidden'),
     'help' => t('Whether or not the content is hidden.'),
