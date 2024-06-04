@@ -4,9 +4,9 @@
     "hidden_nodes_types": [],
     "hidden_nodes_apply_styles": "1",
     "hidden_nodes_show_message": "1",
-    "hidden_nodes_message": "dynamic value in file /hidden_nodes/hidden_nodes.module line 127",
+    "hidden_nodes_message": "This content is currently hidden and not displayed to certain user roles.",
     "hidden_nodes_show_partial_message": "0",
-    "hidden_nodes_partial_message": "dynamic value in file /hidden_nodes/hidden_nodes.module line 134",
+    "hidden_nodes_partial_message": "This page contains some content that is currently hidden and not displayed to certain user roles.",
     "hidden_nodes_show_parent_message": "1",
-    "hidden_nodes_parent_message": "dynamic value in file /hidden_nodes/hidden_nodes.module line 161"
+    "hidden_nodes_parent_message": "This content is not hidden, but it has some parent content that is and will not display in most book-based menus as a result."
 }
