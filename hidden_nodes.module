@@ -554,16 +554,12 @@ function hidden_nodes_action_info() {
     'hidden_nodes_hide_action' => array(
       'label' => t('Hide content'),
       'type' => 'node',
-      'configurable' => FALSE,
-      'triggers' => array('any'),
-      'behavior' => array('changes_property'),
+      'callback' => 'hidden_nodes_hide_action',
     ),
     'hidden_nodes_unhide_action' => array(
       'label' => t('Unhide content'),
       'type' => 'node',
-      'configurable' => FALSE,
-      'triggers' => array('any'),
-      'behavior' => array('changes_property'),
+      'callback' => 'hidden_nodes_unhide_action',
     ),
   );
 }
@@ -583,6 +579,7 @@ function hidden_nodes_hide_action($node, $context) {
   if (isset($node->menu)) {
     $node->menu['enabled'] = (int) (bool) $node->menu['mlid'];
   }
+  $node->save();
 }
 
 /**
@@ -600,4 +597,5 @@ function hidden_nodes_unhide_action($node, $context) {
   if (isset($node->menu)) {
     $node->menu['enabled'] = (int) (bool) $node->menu['mlid'];
   }
+  $node->save();
 }
