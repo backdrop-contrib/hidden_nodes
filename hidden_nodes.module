@@ -16,13 +16,13 @@ function hidden_nodes_config_info() {
 }
 
 /**
- * Implements hook_init().
+ * Implements hook_preprocess_layout().
  *
- * Loads neccessary css onto the page to overlay hidden elements.
+ * Loads necessary css onto the page to overlay hidden elements.
  */
-function hidden_nodes_init() {
-  if (config_get('hidden_nodes.settings', 'hidden_nodes_apply_styles')) {
-    backdrop_add_css(backdrop_get_path('module', 'hidden_nodes') . '/hidden_nodes.css');
+function hidden_nodes_preprocess_layout() {
+  if (config_get('hidden_nodes.settings', 'apply_styles')) {
+    backdrop_add_css(backdrop_get_path('module', 'hidden_nodes') . '/css/hidden_nodes.css');
   }
 }
 
@@ -34,8 +34,8 @@ function hidden_nodes_init() {
 function hidden_nodes_permission() {
   return array(
     'view hidden content' => array(
-      'title' => t('view hidden content'),
-      'description' => t('Give users the ability to see content that is hidden, this also implies that they can hide content too.'),
+      'title' => t('View hidden content'),
+      'description' => t('Give users the ability to see content that is hidden. This also implies that they can hide content, too.'),
     ),
   );
 }
@@ -61,13 +61,12 @@ function hidden_nodes_menu() {
  */
 function hidden_nodes_node_insert($node) {
   // If node's ability to be hidden is valid, save it.
-
   if (isset($node->hidden)) {
     db_insert('hidden_nodes')
       ->fields(array(
-      'nid' => $node->nid,
-      'hidden' => $node->hidden,
-    ))
+        'nid' => $node->nid,
+        'hidden' => $node->hidden,
+      ))
       ->execute();
   }
 }
@@ -77,25 +76,21 @@ function hidden_nodes_node_insert($node) {
  */
 function hidden_nodes_node_update($node) {
   // If node's ability to be hidden is valid, save it.
-
   if (isset($node->hidden)) {
     // See if it has a record at all.
-
     $result1 = db_select('hidden_nodes', 'hn')
     ->fields('hn')
     ->condition('nid', $node->nid)
     ->execute()
     ->rowCount();
     // See if the update was successful.
-
     $result2 = db_update('hidden_nodes')
       ->fields(array(
-      'hidden' => $node->hidden,
-    ))
+        'hidden' => $node->hidden,
+      ))
       ->condition('nid', $node->nid)
       ->execute();
     // Only perform insert if it didn't exist and didn't update.
-
     if (!$result2 && !$result1) {
       db_insert('hidden_nodes')
       ->fields(array(
@@ -112,9 +107,8 @@ function hidden_nodes_node_update($node) {
  */
 function hidden_nodes_node_load($nodes, $types) {
   // Set hidden value if this is a valid type.
-
   foreach ($nodes as $node) {
-    if (in_array($node->type, config_get('hidden_nodes.settings', 'hidden_nodes_types'))) {
+    if (in_array($node->type, config_get('hidden_nodes.settings', 'types'))) {
       $node->hidden = _hidden_nodes_get_status($node->nid);
       if (empty($node->hidden)) {
         $node->hidden = 0;
@@ -129,59 +123,45 @@ function hidden_nodes_node_load($nodes, $types) {
 function hidden_nodes_node_view($node, $view_mode = 'full') {
   $config = config('hidden_nodes.settings');
   // If there is hidden content.
-
   if (isset($node->hidden) && user_access('view hidden content')) {
 
     // Display a message if hidden is true.
-
     if ($node->hidden) {
 
-      // Determine proper message to show based on whether all page content is
-
-      // hidden, or whether only some content on the page is hidden (such as
-
-      // when full nodes are loaded into a view, promoted to front page, etc).
-
+      // Determine proper message to show based on whether all page content is.
+      // hidden, or whether only some content on the page is hidden (such as.
+      // When full nodes are loaded into a view, promoted to front page, etc).
       $obj = menu_get_object();
       if ($obj) {
         if ($obj->nid == $node->nid) {
           // All page content is hidden.
-
-          if ($config->get('hidden_nodes_show_message')) {
-            backdrop_set_message(check_plain($config->get('hidden_nodes_message')), 'warning', FALSE);
+          if ($config->get('show_message')) {
+            backdrop_set_message(check_plain($config->get('message')), 'warning', FALSE);
           }
         }
       }
       else {
         // Page contains some hidden content.
-
-        if ($config->get('hidden_nodes_show_partial_message')) {
-          backdrop_set_message(check_plain($config->get('hidden_nodes_partial_message')), 'warning', FALSE);
+        if ($config->get('show_partial_message')) {
+          backdrop_set_message(check_plain($config->get('partial_message')), 'warning', FALSE);
         }
       }
     }
 
-    // Book module integration, check parents for hidden status to report more
-
+    // Book module integration, check parents for hidden status to report more.
     // accurately.
-
-    elseif ($config->get('hidden_nodes_show_parent_message') && isset($node->book)) {
+    elseif ($config->get('show_parent_message') && isset($node->book)) {
       $parents = array();
-      // Ignore p1 as its always the page itself and there are only 8 parents
-
+      // Ignore p1 as its always the page itself and there are only 8 parents.
       // allowed.
-
       for ($i = 1; $i < 10; $i++) {
-        // If parent has an mlid then it exists in the book router table
-
+        // If parent has an mlid then it exists in the book router table.
         // potentially.
-
         if (isset($node->book['p' . $i]) && $node->book['p' . $i] != 0) {
           $parents[] = $node->book['p' . $i];
         }
       }
       // If there are parents, perform the join otherwise we are done.
-
       if (count($parents) > 0) {
         $result = db_query('SELECT hn.hidden FROM {hidden_nodes} hn JOIN {book} b ON b.nid=hn.nid WHERE b.mlid IN (:parents) AND hn.hidden =1', array(':parents' => $parents));
         $count = 0;
@@ -189,9 +169,8 @@ function hidden_nodes_node_view($node, $view_mode = 'full') {
           $count++;
         }
         // If we count parents that are hidden, report that fact.
-
         if ($count > 0) {
-          backdrop_set_message(check_plain($config->get('hidden_nodes_parent_message')), 'warning', FALSE);
+          backdrop_set_message(check_plain($config->get('parent_message')), 'warning', FALSE);
         }
       }
     }
@@ -203,7 +182,6 @@ function hidden_nodes_node_view($node, $view_mode = 'full') {
  */
 function hidden_nodes_node_delete($node) {
   // Clean up on node delete.
-
   db_delete('hidden_nodes')
   ->condition('nid', $node->nid)
   ->execute();
@@ -212,21 +190,17 @@ function hidden_nodes_node_delete($node) {
 /**
  * Implements hook_form_alter().
  */
-function hidden_nodes_form_alter($form, $form_state, $form_id) {
+function hidden_nodes_form_alter(&$form, &$form_state, $form_id) {
   // Inject new option to hide node onto all node forms.
-
   if (isset($form['type']['#value']) && $form['type']['#value'] . '_node_form' == $form_id) {
     // Get a copy of the current node object.
-
     $node = $form['#node'];
     // Set a default value for hidden to account for new node form.
-
     if (!isset($node->hidden)) {
       $node->hidden = 0;
     }
     // Add field to the form if the setting is there for it.
-
-    if (in_array($node->type, config_get('hidden_nodes.settings', 'hidden_nodes_types'))) {
+    if (in_array($node->type, config_get('hidden_nodes.settings', 'types'))) {
       $form['hidden_nodes'] = array(
         '#type' => 'fieldset',
         '#title' => t('Hide content'),
@@ -256,40 +230,30 @@ function hidden_nodes_form_alter($form, $form_state, $form_id) {
     }
   }
   // Book form integration.
-
   if ($form_id == 'book_admin_edit') {
     // Select just the table.
-
     $hidden_parents = array();
     foreach ($form['table'] as $key => $row) {
       // Make sure we have a row in the table.
-
       if (is_array($row)) {
         // If the attributes for the menu item have been set, add the classes.
-
         if (isset($row['#item']['options']['attributes']) && isset($row['#item']['options']['attributes']['class'])) {
           // Convert classes to an array.
-
           if (is_string($row['#item']['options']['attributes']['class'])) {
             $row['#item']['options']['attributes']['class'] = explode(' ', $row['#item']['options']['attributes']['class']);
           }
           // If class is found, apply styling.
-
           if (array_search('node_is_hidden', $row['#item']['options']['attributes']['class']) !== FALSE) {
             $form['table'][$key]['#attributes']['class'][] = 'node_is_hidden';
             // List this as a hidden parent if node_is_hidden is found.
-
             $hidden_parents[$key] = $row['mlid']['#default_value'];
           }
         }
-        // If we find something that has a parent that is hidden, propagate
-
+        // If we find something that has a parent that is hidden, propagate.
         // class.
-
         if (in_array($row['plid']['#default_value'], $hidden_parents)) {
           $form['table'][$key]['#attributes']['class'][] = 'node_is_hidden';
           // Add this to the hidden list so it can propagate further.
-
           $hidden_parents[$key] = $row['mlid']['#default_value'];
         }
       }
@@ -315,7 +279,6 @@ function _hidden_nodes_form_submit($form, $form_state) {
 function hidden_nodes_node_grants($account, $op) {
   $grants = array();
   // If operation is to view and they have view hidden nodes perm.
-
   if ($op == 'view' && user_access('view hidden content', $account)) {
     $grants['hidden_nodes'] = array(1);
   }
@@ -329,10 +292,8 @@ function hidden_nodes_node_access_records($node) {
   $config = config('hidden_nodes.settings');
   $grants = array();
   // Check if the node type is able to be hidden.
-
-  if (in_array($node->type, $config->get('hidden_nodes_types'))) {
+  if (in_array($node->type, $config->get('types'))) {
     // Only return grants if hidden is true.
-
     if (isset($node->hidden) && $node->hidden) {
       $grants[] = array(
         'realm' => 'hidden_nodes',
@@ -340,8 +301,8 @@ function hidden_nodes_node_access_records($node) {
         'grant_view' => 1,
         'grant_update' => 0,
         'grant_delete' => 0,
-        // set priority based on admin
-        'priority' => $config->get('hidden_nodes_priority'),
+        // Set priority based on admin.
+        'priority' => $config->get('priority'),
       );
     }
     return $grants;
@@ -361,11 +322,9 @@ function hidden_nodes_node_access_explain($row) {
  * Implements hook_menu_link_alter().
  */
 function hidden_nodes_menu_link_alter($item) {
-  // taken from menu_attributes to do the same type of processing first
-
+  // Taken from menu_attributes to do the same type of processing first.
   if (isset($item['options']['attributes']) && is_array($item['options']['attributes'])) {
     // Filter out blank attributes.
-
     foreach ($item['options']['attributes'] as $key => $value) {
       if ((is_array($value) && empty($value)) || is_string($value) && !backdrop_strlen($value)) {
         unset($item['options']['attributes'][$key]);
@@ -373,36 +332,28 @@ function hidden_nodes_menu_link_alter($item) {
     }
 
     // Convert classes to an array.
-
     if (isset($item['options']['attributes']['class']) && is_string($item['options']['attributes']['class'])) {
       $item['options']['attributes']['class'] = explode(' ', $item['options']['attributes']['class']);
     }
   }
   $nid = FALSE;
   // Try and pull from book based menu item, the easiest to account for.
-
   if (isset($item['nid'])) {
     $nid = $item['nid'];
   }
   elseif (isset($item['link_path'])) {
     // Convert link path into args.
-
     $tmp = explode('/', $item['link_path']);
     // If the first part is node and second is numeric, assume nid.
-
     if (count($tmp) > 1 && $tmp[0] == 'node' && is_numeric($tmp[1])) {
       // Set nid = second arg.
-
       $nid = $tmp[1];
     }
   }
   // Only process this if we actually found a node to act on.
-
   if ($nid) {
     // Need to directly access database as static cache of object is invalid.
-
     // This happens because page save would change the value of hidden.
-
     if (_hidden_nodes_get_status($nid)) {
       if (!isset($item['options']['attributes'])) {
         $item['options']['attributes'] = array(
@@ -419,7 +370,6 @@ function hidden_nodes_menu_link_alter($item) {
     }
     else {
       // Avoid potential conflicts with menu attributes modules.
-
       if (isset($item['options']['attributes']['class'])) {
         foreach ($item['options']['attributes']['class'] as $key => $class) {
           if ($class == 'node_is_hidden') {
@@ -481,7 +431,6 @@ function hidden_nodes_outline_designer_ops_js($ajax_path) {
  */
 function hidden_nodes_outline_designer_form_overlay() {
   // Delete form.
-
   $form['od_hidden_nodes_multiple'] = array(
     '#title' => t('Propagate hidden status'),
     '#id' => 'od_hidden_nodes_multiple',
@@ -491,7 +440,6 @@ function hidden_nodes_outline_designer_form_overlay() {
     '#default_value' => TRUE,
   );
   // Hidden status.
-
   $form['od_hidden_nodes_status'] = array(
     '#title' => t('Hide content'),
     '#id' => 'od_hidden_nodes_status',
@@ -509,23 +457,17 @@ function hidden_nodes_outline_designer_form_overlay() {
 function hidden_nodes_outline_designer_hide_node($nid, $multiple, $status) {
   $config = config('hidden_nodes.settings');
   // Load node.
-
   $node = node_load($nid);
   // Verify this type can be hidden and node access rights.
-
-  if (isset($node->nid) && in_array($node->type, $config->get('hidden_nodes_types')) && node_access('update', $node) && user_access('view hidden content') && in_array($status, array(0, 1)) && $status != $node->hidden) {
+  if (isset($node->nid) && in_array($node->type, $config->get('types')) && node_access('update', $node) && user_access('view hidden content') && in_array($status, array(0, 1)) && $status != $node->hidden) {
     // Verify the status has changed and is a valid value.
-
     $node->hidden = $status;
     node_save($node);
     // If the multiple flag is set then iterate down.
-
     if ($multiple) {
       // Pull only the nodes that have the original node as a parent.
-
       $mlid = $node->book['mlid'];
       // Ensure this is a real value.
-
       if ($mlid != 0 && $mlid != '') {
         $result = db_select('menu_links', 'ml')
           ->fields('ml', array('link_path'))
@@ -549,7 +491,7 @@ function hidden_nodes_outline_designer_hide_node($nid, $multiple, $status) {
           ->execute();
         foreach ($result as $value) {
           $current_node = node_load(str_replace('node/', '', $value->link_path));
-          if (isset($current_node->nid) && in_array($current_node->type, $config->get('hidden_nodes_types')) && node_access('update', $current_node) && $status != $current_node->hidden) {
+          if (isset($current_node->nid) && in_array($current_node->type, $config->get('types')) && node_access('update', $current_node) && $status != $current_node->hidden) {
             $current_node->hidden = $status;
             node_save($current_node);
           }
@@ -570,10 +512,8 @@ function hidden_nodes_propagate_hide_node($nid, $multiple, $status) {
   $node = node_load($nid);
   if ($multiple) {
     // Pull only the nodes that have the original node as a parent.
-
     $mlid = $node->book['mlid'];
     // Ensure this is a real value.
-
     if ($mlid != 0 && $mlid != '') {
       $result = db_select('menu_links', 'ml')
             ->fields('ml', array('link_path'))
@@ -597,7 +537,7 @@ function hidden_nodes_propagate_hide_node($nid, $multiple, $status) {
             ->execute();
       foreach ($result as $value) {
         $current_node = node_load(str_replace('node/', '', $value->link_path));
-        if (isset($current_node->nid) && in_array($current_node->type, config_get('hidden_nodes.settings', 'hidden_nodes_types')) && node_access('update', $current_node)) {
+        if (isset($current_node->nid) && in_array($current_node->type, config_get('hidden_nodes.settings', 'types')) && node_access('update', $current_node)) {
           $current_node->hidden = $status;
           node_save($current_node);
         }
@@ -635,15 +575,11 @@ function hidden_nodes_action_info() {
  */
 function hidden_nodes_hide_action($node, $context) {
   $node->hidden = 1;
-  // menu object not loaded into node to avoid cache rebuild; the very thing
-
-  // that we are trying to accomplish as part of this action
-
+  // Menu object not loaded into node to avoid cache rebuild; the very thing
+  // That we are trying to accomplish as part of this action.
   menu_node_prepare($node);
   // Need this check because menu['enabled'] is not set unless specified by  ui.
-
   // This allows for updates to be made from other modules.
-
   if (isset($node->menu)) {
     $node->menu['enabled'] = (int) (bool) $node->menu['mlid'];
   }
@@ -656,15 +592,11 @@ function hidden_nodes_hide_action($node, $context) {
  */
 function hidden_nodes_unhide_action($node, $context) {
   $node->hidden = 0;
-  // menu object not loaded into node to avoid cache rebuild; the very thing
-
-  // that we are trying to accomplish as part of this action
-
+  // Menu object not loaded into node to avoid cache rebuild; the very thing
+  // That we are trying to accomplish as part of this action.
   menu_node_prepare($node);
   // Need this check because menu['enabled'] is not set unless specified by  ui.
-
   // This allows for updates to be made from other modules.
-
   if (isset($node->menu)) {
     $node->menu['enabled'] = (int) (bool) $node->menu['mlid'];
   }

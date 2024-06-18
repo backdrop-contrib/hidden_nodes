@@ -9,8 +9,6 @@
  */
 function hidden_nodes_install() {
   // Make sure that the hidden_nodes module runs before menu alter system.
-
-
   db_update('system')
   ->fields(array(
     'weight' => -1,
@@ -18,27 +16,6 @@ function hidden_nodes_install() {
   ->condition('name', 'hidden_nodes')
   ->condition('type', 'module')
   ->execute();
-  // Dynamically generated variable data was detected on the following lines.
-  // /hidden_nodes/hidden_nodes.module line 127
-  // /hidden_nodes/hidden_nodes.module line 134
-  // /hidden_nodes/hidden_nodes.module line 161
-}
-
-/**
- * Implements hook_uninstall().
- */
-function hidden_nodes_uninstall() {
-  // Remove variables.
-
-
-  config_clear('hidden_nodes.settings', 'hidden_nodes_types');
-  config_clear('hidden_nodes.settings', 'hidden_nodes_apply_styles');
-  config_clear('hidden_nodes.settings', 'hidden_nodes_show_message');
-  config_clear('hidden_nodes.settings', 'hidden_nodes_message');
-  config_clear('hidden_nodes.settings', 'hidden_nodes_show_partial_message');
-  config_clear('hidden_nodes.settings', 'hidden_nodes_partial_message');
-  config_clear('hidden_nodes.settings', 'hidden_nodes_show_parent_message');
-  config_clear('hidden_nodes.settings', 'hidden_nodes_parent_message');
 }
 
 /**
@@ -73,15 +50,15 @@ function hidden_nodes_schema() {
  */
 function hidden_nodes_update_1000() {
   $config = config('hidden_nodes.settings');
-  $config->set('hidden_nodes_priority', update_variable_get('hidden_nodes_priority', '1000'));
-  $config->set('hidden_nodes_types', update_variable_get('hidden_nodes_types', array()));
-  $config->set('hidden_nodes_apply_styles', update_variable_get('hidden_nodes_apply_styles', '1'));
-  $config->set('hidden_nodes_show_message', update_variable_get('hidden_nodes_show_message', '1'));
-  $config->set('hidden_nodes_message', update_variable_get('hidden_nodes_message', 'dynamic value in file /hidden_nodes/hidden_nodes.module line 127'));
-  $config->set('hidden_nodes_show_partial_message', update_variable_get('hidden_nodes_show_partial_message', '0'));
-  $config->set('hidden_nodes_partial_message', update_variable_get('hidden_nodes_partial_message', 'dynamic value in file /hidden_nodes/hidden_nodes.module line 134'));
-  $config->set('hidden_nodes_show_parent_message', update_variable_get('hidden_nodes_show_parent_message', '1'));
-  $config->set('hidden_nodes_parent_message', update_variable_get('hidden_nodes_parent_message', 'dynamic value in file /hidden_nodes/hidden_nodes.module line 161'));
+  $config->set('priority', update_variable_get('hidden_nodes_priority', '1000'));
+  $config->set('types', update_variable_get('hidden_nodes_types', array()));
+  $config->set('apply_styles', update_variable_get('hidden_nodes_apply_styles', '1'));
+  $config->set('show_message', update_variable_get('hidden_nodes_show_message', '1'));
+  $config->set('message', update_variable_get('hidden_nodes_message', "This content is currently hidden and not displayed to certain user roles."));
+  $config->set('show_partial_message', update_variable_get('hidden_nodes_show_partial_message', '0'));
+  $config->set('partial_message', update_variable_get('hidden_nodes_partial_message', "This page contains some content that is currently hidden and not displayed to certain user roles."));
+  $config->set('show_parent_message', update_variable_get('hidden_nodes_show_parent_message', '1'));
+  $config->set('parent_message', update_variable_get('hidden_nodes_parent_message', "This content is not hidden, but it has some parent content that is and will not display in most book-based menus as a result."));
   $config->save();
 
   update_variable_del('hidden_nodes_priority');
