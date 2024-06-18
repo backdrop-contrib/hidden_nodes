@@ -191,6 +191,8 @@ function hidden_nodes_node_delete($node) {
  * Implements hook_form_alter().
  */
 function hidden_nodes_form_alter(&$form, &$form_state, $form_id) {
+  $book_types = config_get('book.settings', 'book_allowed_types');
+  $is_book = (is_array($book_types) && in_array($form['#bundle'], $book_types));
   // Inject new option to hide node onto all node forms.
   if (isset($form['type']['#value']) && $form['type']['#value'] . '_node_form' == $form_id) {
     // Get a copy of the current node object.
@@ -221,11 +223,13 @@ function hidden_nodes_form_alter(&$form, &$form_state, $form_id) {
         '#default_value' => $node->hidden,
         '#access' => user_access('view hidden content'),
       );
-      $form['hidden_nodes']['propagate'] = array(
-        '#type' => 'checkbox',
-        '#title' => t('Propagate hidden status'),
-        '#access' => user_access('view hidden content'),
-      );
+      if ($is_book) {
+        $form['hidden_nodes']['propagate'] = array(
+          '#type' => 'checkbox',
+          '#title' => t('Apply hidden status to all child pages upon submitting'),
+          '#access' => user_access('view hidden content'),
+        );
+      }
       $form['#submit'][] = '_hidden_nodes_form_submit';
     }
   }
@@ -249,7 +253,7 @@ function hidden_nodes_form_alter(&$form, &$form_state, $form_id) {
             $hidden_parents[$key] = $row['mlid']['#default_value'];
           }
         }
-        // If we find something that has a parent that is hidden, propagate.
+        // If we find something that has a parent that is hidden, propagate the
         // class.
         if (in_array($row['plid']['#default_value'], $hidden_parents)) {
           $form['table'][$key]['#attributes']['class'][] = 'node_is_hidden';
@@ -412,20 +416,15 @@ function hidden_nodes_propagate_hide_node($nid, $multiple, $status) {
       $result = db_select('menu_links', 'ml')
             ->fields('ml', array('link_path'))
             ->condition(db_or()
+              ->condition('plid', $mlid)
               ->condition('p2', $mlid)
               ->condition('p3', $mlid)
-            ->condition(db_or()
               ->condition('p4', $mlid)
               ->condition('p5', $mlid)
-            ->condition(db_or()
               ->condition('p6', $mlid)
               ->condition('p7', $mlid)
-            ->condition(db_or()
               ->condition('p8', $mlid)
               ->condition('p9', $mlid)
-            )
-            )
-            )
             )
             ->orderBy('depth', 'asc')
             ->execute();
@@ -438,7 +437,7 @@ function hidden_nodes_propagate_hide_node($nid, $multiple, $status) {
       }
     }
   }
-  backdrop_set_message(t('Content was propagated'));
+  backdrop_set_message(t('Hidden status was applied to child pages.'));
 }
 /**
  * Implements hook_action_info().
